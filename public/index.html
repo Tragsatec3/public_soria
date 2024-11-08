@@ -115,6 +115,37 @@
         transparent: true,
         attribution: '© Instituto Geográfico Nacional'
       });
+      // Obtener información de la parcela
+      map.on('click', function (e) {
+        // URL que utiliza el proxy en Vercel
+        const url = /api/proxy?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo&LAYERS=Catastro&QUERY_LAYERS=Catastro&INFO_FORMAT=text/xml&SRS=EPSG:4326&BBOX=${map.getBounds().toBBoxString()}&WIDTH=${map.getSize().x}&HEIGHT=${map.getSize().y}&X=${Math.floor(e.containerPoint.x)}&Y=${Math.floor(e.containerPoint.y)};
+        
+        fetch(url)
+          .then(response => response.text())
+          .then(data => {
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(data, "text/xml");
+
+            const enlace = xmlDoc.getElementsByTagName("a")[0];
+            const referenciaCatastral = enlace?.textContent || "No disponible";
+           
+            const rc1 = referenciaCatastral.substring(0, 7);
+            const rc2 = referenciaCatastral.substring(7);
+
+            const sedeElectronicaUrl = https://www1.sedecatastro.gob.es/CYCBienInmueble/OVCListaBienes.aspx?RC1=${rc1}&RC2=${rc2}&RC3=&RC4=&esBice=&RCBice1=&RCBice2=&DenoBice=&pest=rc&final=&RCCompleta=${referenciaCatastral}&from=OVCBusqueda&tipoCarto=nuevo&ZV=NO&ZR=NO&anyoZV=&strFechaVR=&tematicos=&anyotem=;
+
+            const popupContent = 
+                <strong>Referencia catastral:</strong>
+                <a href="${sedeElectronicaUrl}" target="_blank">${referenciaCatastral}</a>
+            ;
+
+            L.popup()
+                .setLatLng(e.latlng)
+                .setContent(popupContent)
+                .openOn(map);
+          })
+          .catch(error => console.error('Error en GetFeatureInfo:', error));
+      });
 
       // Mapas base
       var baseMaps = {
