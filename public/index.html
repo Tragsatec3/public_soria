@@ -191,7 +191,7 @@
       // Copiar coordenadas X al portapapeles
       $('#copyXButton').on('click', function() {
         const xCoord = $('#xCoord').text();
-        navigator.clipboard.writeText(`X=${xCoord}`).then(() => {
+        navigator.clipboard.writeText(xCoord).then(() => {
           alert('¡Coordenada X copiada al portapapeles!');
         }).catch(err => {
           console.error('Error al copiar al portapapeles: ', err);
@@ -201,7 +201,7 @@
       // Copiar coordenadas Y al portapapeles
       $('#copyYButton').on('click', function() {
         const yCoord = $('#yCoord').text();
-        navigator.clipboard.writeText(`Y=${yCoord}`).then(() => {
+        navigator.clipboard.writeText(yCoord).then(() => {
           alert('¡Coordenada Y copiada al portapapeles!');
         }).catch(err => {
           console.error('Error al copiar al portapapeles: ', err);
