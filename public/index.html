@@ -4,23 +4,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mapa de Soria</title>
-
+ 
   <!-- Hoja de estilos de Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
 
   <style>
-    #map { height: 800px; width: 80%; padding-left: 10px; }
+    #map { height: 800px; width: 80%; }
     #coordinates {
       background-color: rgba(255, 255, 255, 0.8);
       border: 1px solid #ccc;
       padding: 10px;
       position: fixed;
-      top: 40px;
-      right: 10px;
+      bottom: 120px;
+      left: 10px;
       z-index: 1000;
     }
-    .copyButton {
+    #copyButton {
       margin-top: 10px;
       cursor: pointer;
       padding: 5px 10px;
@@ -39,27 +39,24 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.7.4/proj4.js"></script>
   <script src="https://unpkg.com/leaflet-plugins/layer/tile/Google.js"></script>
   <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-
-  <!-- Archivos JS de provincias y municipios -->
   <script type="text/javascript" src="provincia.js"></script>
   <script type="text/javascript" src="municipios.js"></script>
+
 </head>
 <body>
   <h1>Mapa de Soria</h1>
   <div id="map"></div>
-
+ 
   <!-- Cuadro para mostrar las coordenadas -->
   <div id="coordinates">
-    <p><strong>Coordenadas ETRS89 UTM:</strong></p>
-    <p id="xCoord">X: </p>
-    <p id="yCoord">Y: </p>
-    <button class="copyButton" id="copyXButton">Copiar X</button>
-    <button class="copyButton" id="copyYButton">Copiar Y</button>
+    <p><strong>Coordenadas del ratón:</strong></p>
+    <p id="wgs">WGS 84: </p>
+    <p id="etrs">ETRS89 UTM: </p>
+    <button id="copyButton">copiar coordenadas</button> <!-- Botón para poder copiar las coord -->
   </div>
 
   <script>
     $(document).ready(function() {
-      // Función para obtener parámetros de la URL
       function getQueryParam(param) {
         const urlParams = new URLSearchParams(window.location.search);
         return urlParams.get(param);
@@ -67,15 +64,14 @@
 
       const address = getQueryParam('address');
       const lat = parseFloat(getQueryParam('lat')) || 41.6644;
-      const lng = parseFloat(getQueryParam('lng')) || -2.5458;
-      const x = parseFloat(getQueryParam('x'));
-      const y = parseFloat(getQueryParam('y'));
+      const lng = parseFloat(getQueryParam('lng')) || -2.5458;  
+      const x = parseFloat(getQueryParam('x'));                
+      const y = parseFloat(getQueryParam('y'));                
       const zoom = parseInt(getQueryParam('zoom')) || 9;
 
       let map;
-      let frozenCoords = false;
+      let frozenCoords = false; //para congelar y descongelar las coordenadas
 
-      // Si tenemos coordenadas UTM, usar esas; si no, usar las de lat, lng
       if (!isNaN(x) && !isNaN(y)) {
         var wgsCoords = proj4('+proj=utm +zone=30 +datum=ETRS89 +units=m +no_defs', 'EPSG:4326', [x, y]);
         map = L.map('map').setView([wgsCoords[1], wgsCoords[0]], zoom);
@@ -83,7 +79,6 @@
         map = L.map('map').setView([lat, lng], zoom);
       }
 
-      // Capas base
       var osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 40,
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -105,21 +100,21 @@
         transparent: true,
         version: '1.1.1',
         attribution: "DIRECCION GENERAL DEL CATASTRO",
-        maxZoom: 40
-      });
+        maxZoom:40
+      }).addTo(map);
 
       var callejero = L.tileLayer.wms('http://www.ign.es/wms-inspire/ign-base?', {
-        layers: 'IGNBaseTodo',
-        format: 'image/png',
-        maxZoom: 40,
-        transparent: true,
-        attribution: '© Instituto Geográfico Nacional'
-      });
+          layers: 'IGNBaseTodo',
+          format: 'image/png',
+          maxZoom: 40,
+          transparent: true,
+          attribution: '© Instituto Geográfico Nacional'
+      }).addTo(map);
+
       // Obtener información de la parcela
       map.on('click', function (e) {
         // URL que utiliza el proxy en Vercel
-        const url = `/api/proxy?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo&LAYERS=Catastro&QUERY_LAYERS=Catastro&INFO_FORMAT=text/xml&SRS=EPSG:4326&BBOX=${map.getBounds().toBBoxString()}&WIDTH=${map.getSize().x}&HEIGHT=${map.getSize().y}&X=${Math.floor(e.containerPoint.x)}&Y=${Math.floor(e.containerPoint.y)}`;
-
+        const url = /api/proxy?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo&LAYERS=Catastro&QUERY_LAYERS=Catastro&INFO_FORMAT=text/xml&SRS=EPSG:4326&BBOX=${map.getBounds().toBBoxString()}&WIDTH=${map.getSize().x}&HEIGHT=${map.getSize().y}&X=${Math.floor(e.containerPoint.x)}&Y=${Math.floor(e.containerPoint.y)};
         
         fetch(url)
           .then(response => response.text())
@@ -157,52 +152,31 @@
         "Imagen PNOA": pnoaLayer
       };
 
-      // Capas de provincias y municipios
+      // Capas de provincia y municipios
       var overlay = {
         "Provincia de Soria": L.geoJson(provincia, { style: {"color": "#EB5B00", "weight": 4, "opacity": 0.8} }).addTo(map),
         "Municipios": L.geoJson(municipios, { style: {"color": "#3182bd", "weight": 1, "opacity": 3.5} })
       };
 
-      // Control de capas
       L.control.layers(baseMaps, overlay, { position: 'topright' }).addTo(map);
       L.control.scale({ metric: true, imperial: false }).addTo(map);
 
-      // Función para actualizar las coordenadas cuando el ratón se mueve
+      // función para actualizar las coordenadas
       function updateCoordinates(e) {
-        if (frozenCoords) return;
-        const lat = e.latlng.lat;
-        const lng = e.latlng.lng;
-        const etrsCoords = proj4('EPSG:4326', '+proj=utm +zone=30 +datum=ETRS89 +units=m +no_defs', [lng, lat]);
-
-        $('#xCoord').text(`X: ${etrsCoords[0].toFixed(2)}`);
-        $('#yCoord').text(`Y: ${etrsCoords[1].toFixed(2)}`);
+        if (frozenCoords) return; // Si están congeladas, no actualizar
+        var lat = e.latlng.lat;
+        var lng = e.latlng.lng;
+        $('#wgs').text(WGS 84: ${lat.toFixed(4)}, ${lng.toFixed(4)});
+        var etrsCoords = proj4('EPSG:4326', '+proj=utm +zone=30 +datum=ETRS89 +units=m +no_defs', [lng, lat]);
+        $('#etrs').text(ETRS89 UTM: ${etrsCoords[0].toFixed(2)}, ${etrsCoords[1].toFixed(2)});
       }
 
       map.on('mousemove', updateCoordinates);
 
-      // Congelar las coordenadas al hacer clic en el mapa
-      map.on('click', function(e) {
+      $('#copyButton').click(function() {
         frozenCoords = !frozenCoords;
-        if (!frozenCoords) updateCoordinates(e);
-      });
-
-      // Copiar las coordenadas al portapapeles
-      $('#copyXButton').on('click', function() {
-        const xCoord = $('#xCoord').text().replace("X: ", "");
-        navigator.clipboard.writeText(xCoord).then(() => {
-          alert('¡Coordenada X copiada al portapapeles!');
-        }).catch(err => {
-          console.error('Error al copiar X:', err);
-        });
-      });
-
-      $('#copyYButton').on('click', function() {
-        const yCoord = $('#yCoord').text().replace("Y: ", "");
-        navigator.clipboard.writeText(yCoord).then(() => {
-          alert('¡Coordenada Y copiada al portapapeles!');
-        }).catch(err => {
-          console.error('Error al copiar Y:', err);
-        });
+        var coordsText = ${$('#wgs').text()} | ${$('#etrs').text()};
+        navigator.clipboard.writeText(coordsText);
       });
     });
   </script>
