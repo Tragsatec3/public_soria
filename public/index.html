@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
 
   <style>
-    #map { height: 800px; width: 80%; }
+    #map { height: 800px; width: 100%; }
     #coordinates {
       background-color: rgba(255, 255, 255, 0.8);
       border: 1px solid #ccc;
@@ -52,7 +52,7 @@
     <p><strong>Coordenadas del ratón:</strong></p>
     <p id="wgs">WGS 84: </p>
     <p id="etrs">ETRS89 UTM: </p>
-    <button id="copyButton">copiar coordenadas</button> <!-- Botón para poder copiar las coord -->
+    <button id="copyButton">Copiar coordenadas</button> <!-- Botón para poder copiar las coordenadas -->
   </div>
 
   <script>
@@ -70,7 +70,7 @@
       const zoom = parseInt(getQueryParam('zoom')) || 9;
 
       let map;
-      let frozenCoords = false; //para congelar y descongelar las coordenadas
+      let frozenCoords = false; // para congelar y descongelar las coordenadas
 
       if (!isNaN(x) && !isNaN(y)) {
         var wgsCoords = proj4('+proj=utm +zone=30 +datum=ETRS89 +units=m +no_defs', 'EPSG:4326', [x, y]);
@@ -114,7 +114,7 @@
       // Obtener información de la parcela
       map.on('click', function (e) {
         // URL que utiliza el proxy en Vercel
-        const url = /api/proxy?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo&LAYERS=Catastro&QUERY_LAYERS=Catastro&INFO_FORMAT=text/xml&SRS=EPSG:4326&BBOX=${map.getBounds().toBBoxString()}&WIDTH=${map.getSize().x}&HEIGHT=${map.getSize().y}&X=${Math.floor(e.containerPoint.x)}&Y=${Math.floor(e.containerPoint.y)};
+        const url = `/api/proxy?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo&LAYERS=Catastro&QUERY_LAYERS=Catastro&INFO_FORMAT=text/xml&SRS=EPSG:4326&BBOX=${map.getBounds().toBBoxString()}&WIDTH=${map.getSize().x}&HEIGHT=${map.getSize().y}&X=${Math.floor(e.containerPoint.x)}&Y=${Math.floor(e.containerPoint.y)}`;
         
         fetch(url)
           .then(response => response.text())
@@ -128,12 +128,12 @@
             const rc1 = referenciaCatastral.substring(0, 7);
             const rc2 = referenciaCatastral.substring(7);
 
-            const sedeElectronicaUrl = https://www1.sedecatastro.gob.es/CYCBienInmueble/OVCListaBienes.aspx?RC1=${rc1}&RC2=${rc2}&RC3=&RC4=&esBice=&RCBice1=&RCBice2=&DenoBice=&pest=rc&final=&RCCompleta=${referenciaCatastral}&from=OVCBusqueda&tipoCarto=nuevo&ZV=NO&ZR=NO&anyoZV=&strFechaVR=&tematicos=&anyotem=;
+            const sedeElectronicaUrl = `https://www1.sedecatastro.gob.es/CYCBienInmueble/OVCListaBienes.aspx?RC1=${rc1}&RC2=${rc2}&RC3=&RC4=&esBice=&RCBice1=&RCBice2=&DenoBice=&pest=rc&final=&RCCompleta=${referenciaCatastral}&from=OVCBusqueda&tipoCarto=nuevo&ZV=NO&ZR=NO&anyoZV=&strFechaVR=&tematicos=&anyotem=`;
 
-            const popupContent = 
+            const popupContent = `
                 <strong>Referencia catastral:</strong>
                 <a href="${sedeElectronicaUrl}" target="_blank">${referenciaCatastral}</a>
-            ;
+            `;
 
             L.popup()
                 .setLatLng(e.latlng)
@@ -166,17 +166,21 @@
         if (frozenCoords) return; // Si están congeladas, no actualizar
         var lat = e.latlng.lat;
         var lng = e.latlng.lng;
-        $('#wgs').text(WGS 84: ${lat.toFixed(4)}, ${lng.toFixed(4)});
+        $('#wgs').text(`WGS 84: ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
         var etrsCoords = proj4('EPSG:4326', '+proj=utm +zone=30 +datum=ETRS89 +units=m +no_defs', [lng, lat]);
-        $('#etrs').text(ETRS89 UTM: ${etrsCoords[0].toFixed(2)}, ${etrsCoords[1].toFixed(2)});
+        $('#etrs').text(`ETRS89 UTM: ${etrsCoords[0].toFixed(2)}, ${etrsCoords[1].toFixed(2)}`);
       }
 
       map.on('mousemove', updateCoordinates);
 
+      // Función para congelar las coordenadas
       $('#copyButton').click(function() {
         frozenCoords = !frozenCoords;
-        var coordsText = ${$('#wgs').text()} | ${$('#etrs').text()};
-        navigator.clipboard.writeText(coordsText);
+        if (frozenCoords) {
+          $('#copyButton').text('Descongelar coordenadas');
+        } else {
+          $('#copyButton').text('Copiar coordenadas');
+        }
       });
     });
   </script>
