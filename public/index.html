@@ -177,8 +177,8 @@
         "Provincia de Soria": L.geoJson(provincia, { style: { "color": "#EB5B00", "weight": 4, "opacity": 0.8 }}).addTo(map),
         "Municipios": L.geoJson(municipios, { style: { "color": "#3182bd", "weight": 1, "opacity": 3.5 }, 
                                             onEachFeature: function(feature, layer) {
-                                              if(feature.properties && feature.properties.NOMBRE) {
-                                                layer.bindToolTip(feature.properties.NOMBRE, {
+                                              if(feature.properties && feature.properties.D_MUN) {
+                                                layer.bindToolTip(feature.properties.D_MUN, {
                                                   permanent: false,
                                                   direction: "top",
                                                   className: "municipio-css"
