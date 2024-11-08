@@ -16,8 +16,8 @@
       border: 1px solid #ccc;
       padding: 10px;
       position: fixed;
-      bottom: 120px;
-      left: 10px;
+      top: 120px;
+      right: 40px;
       z-index: 1000;
     }
     #copyButton {
@@ -45,16 +45,16 @@
 </head>
 <body>
   <h1>Mapa de Soria</h1>
-  <div id="map"></div>
- 
-  <!-- Cuadro para mostrar las coordenadas -->
+  <!-- Cuadro para mostrar solo las coordenadas en ETRS89 UTM -->
   <div id="coordinates">
     <p><strong>Coordenadas del ratón:</strong></p>
-    <p id="wgs">WGS 84: </p>
-    <p id="etrs">ETRS89 UTM: </p>
-    <button id="copyButton">Copiar coordenadas</button> <!-- Botón para poder copiar las coordenadas -->
+    <p id="etrs">X=<span id="xCoord"></span>, Y=<span id="yCoord"></span></p>
+    <button class="copyButton" id="copyXButton">Copiar X</button>
+    <button class="copyButton" id="copyYButton">Copiar Y</button>
   </div>
-
+  
+  <div id="map"></div>
+  
   <script>
     $(document).ready(function() {
       function getQueryParam(param) {
@@ -161,28 +161,42 @@
       L.control.layers(baseMaps, overlay, { position: 'topright' }).addTo(map);
       L.control.scale({ metric: true, imperial: false }).addTo(map);
 
-      // función para actualizar las coordenadas
+  // Actualizar solo coordenadas ETRS89 UTM en el cuadro
       function updateCoordinates(e) {
-        if (frozenCoords) return; // Si están congeladas, no actualizar
+        if (frozenCoords) return;
         var lat = e.latlng.lat;
         var lng = e.latlng.lng;
-        $('#wgs').text(`WGS 84: ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
         var etrsCoords = proj4('EPSG:4326', '+proj=utm +zone=30 +datum=ETRS89 +units=m +no_defs', [lng, lat]);
-        $('#etrs').text(`ETRS89 UTM: ${etrsCoords[0].toFixed(2)}, ${etrsCoords[1].toFixed(2)}`);
+        
+        $('#xCoord').text(etrsCoords[0].toFixed(2));
+        $('#yCoord').text(etrsCoords[1].toFixed(2));
       }
 
       map.on('mousemove', updateCoordinates);
 
-      // Función para congelar las coordenadas
-      $('#copyButton').click(function() {
+      // Alternar entre congelar y descongelar las coordenadas
+      map.on('click', function(e) {
         frozenCoords = !frozenCoords;
-        if (frozenCoords) {
-          $('#copyButton').text('Descongelar coordenadas');
-        } else {
-          $('#copyButton').text('Copiar coordenadas');
-        }
+        if (!frozenCoords) updateCoordinates(e);
       });
-    });
+
+      $('#copyXButton').on('click', function() {
+        const xCoord = $('#xCoord').text();
+        navigator.clipboard.writeText(`X=${xCoord}`).then(() => {
+          alert('¡Coordenada X copiada al portapapeles!');
+        }).catch(err => {
+          console.error('Error al copiar al portapapeles: ', err);
+        });
+      });
+
+      $('#copyYButton').on('click', function() {
+        const yCoord = $('#yCoord').text();
+        navigator.clipboard.writeText(`Y=${yCoord}`).then(() => {
+          alert('¡Coordenada Y copiada al portapapeles!');
+        }).catch(err => {
+          console.error('Error al copiar al portapapeles: ', err);
+        });
+      });
   </script>
 </body>
 </html>
