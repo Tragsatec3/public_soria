@@ -161,47 +161,43 @@
       L.control.layers(baseMaps, overlay, { position: 'topright' }).addTo(map);
       L.control.scale({ metric: true, imperial: false }).addTo(map);
 
+      $(document).ready(function() {
+      let frozenCoords = false;
 // Actualizar solo coordenadas ETRS89 UTM en el cuadro
       function updateCoordinates(e) {
         if (frozenCoords) return;
-        var lat = e.latlng.lat;
-        var lng = e.latlng.lng;
-        var etrsCoords = proj4('EPSG:4326', '+proj=utm +zone=30 +datum=ETRS89 +units=m +no_defs', [lng, lat]);
+        const lat = e.latlng.lat;
+        const lng = e.latlng.lng;
+        const etrsCoords = proj4('EPSG:4326', '+proj=utm +zone=30 +datum=ETRS89 +units=m +no_defs', [lng, lat]);
         
-        $('#xCoord').text(etrsCoords[0].toFixed(2));
-        $('#yCoord').text(etrsCoords[1].toFixed(2));
+        $('#xCoord').text(`X: ${etrsCoords[0].toFixed(2)}`);
+        $('#yCoord').text(`Y: ${etrsCoords[1].toFixed(2)}`);
       }
 
       map.on('mousemove', updateCoordinates);
 
-      // Alternar entre congelar y descongelar las coordenadas
       map.on('click', function(e) {
         frozenCoords = !frozenCoords;
         if (!frozenCoords) updateCoordinates(e);
       });
 
       $('#copyXButton').on('click', function() {
-        const xCoord = $('#xCoord').text();
-        navigator.clipboard.writeText(`X=${xCoord}`).then(() => {
+        const xCoord = $('#xCoord').text().replace("X: ", "");
+        navigator.clipboard.writeText(xCoord).then(() => {
           alert('¡Coordenada X copiada al portapapeles!');
         }).catch(err => {
-          console.error('Error al copiar al portapapeles: ', err);
+          console.error('Error al copiar X:', err);
         });
       });
 
       $('#copyYButton').on('click', function() {
-        const yCoord = $('#yCoord').text();
-        navigator.clipboard.writeText(`Y=${yCoord}`).then(() => {
+        const yCoord = $('#yCoord').text().replace("Y: ", "");
+        navigator.clipboard.writeText(yCoord).then(() => {
           alert('¡Coordenada Y copiada al portapapeles!');
         }).catch(err => {
-          console.error('Error al copiar al portapapeles: ', err);
+          console.error('Error al copiar Y:', err);
         });
       });
-
-  // Aviso al usuario
-  alert("Coordenadas copiadas al portapapeles");
-});
-
     });
   </script>
 </body>
