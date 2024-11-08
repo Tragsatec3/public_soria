@@ -173,11 +173,22 @@
 
       map.on('mousemove', updateCoordinates);
 
-      $('#copyButton').click(function() {
-        frozenCoords = !frozenCoords;
-        var coordsText = `${$('#wgs').text()} | ${$('#etrs').text()}`;
-        navigator.clipboard.writeText(coordsText);
-      });
+     $('#copyButton').click(function() {
+  frozenCoords = !frozenCoords;
+  var coordsText = `${$('#wgs').text()} | ${$('#etrs').text()}`;
+
+  // Alternativa de copiado usando un textarea temporal
+  const tempTextArea = document.createElement('textarea');
+  tempTextArea.value = coordsText;
+  document.body.appendChild(tempTextArea);
+  tempTextArea.select();
+  document.execCommand('copy'); // Comando de copia
+  document.body.removeChild(tempTextArea); // Eliminar el textarea temporal
+
+  // Aviso al usuario
+  alert("Coordenadas copiadas al portapapeles");
+});
+
     });
   </script>
 </body>
